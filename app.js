@@ -1,15 +1,16 @@
-const crypto = require("crypto");
-
 function generateXAuthHeader(password) {
-  const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, ""); // Get current date in YYYYMMDD format
-  const data = `${password}_${timestamp}`;
-  const hash = crypto.createHash("md5").update(data).digest("hex");
-  return hash;
+  const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  const xAuthValue = `${password}_${timestamp}`;
+
+  const md5Hash = CryptoJS.MD5(xAuthValue).toString();
+
+  return md5Hash;
 }
 
 const apiUrl = "http://api.valantis.store:40000/";
 const password = "Valantis";
 const xAuthHeaderValue = generateXAuthHeader(password);
+console.log(xAuthHeaderValue);
 
 // const requestData = {
 //   action: "filter",
@@ -41,3 +42,21 @@ fetch(apiUrl, {
   .catch((error) => {
     console.error("Error:", error);
   });
+
+// Function to render goods list in HTML
+async function renderGoodsList() {
+  const goodsListDiv = document.getElementById("goods-list");
+  const goodsData = await fetchGoods();
+
+  goodsListDiv.innerHTML = ""; // Clear previous content
+
+  goodsData.forEach((item) => {
+    const itemDiv = document.createElement("div");
+    itemDiv.classList.add("item");
+    itemDiv.textContent = `ID: ${item.id}, Name: ${item.name}, Price: ${item.price}`;
+    goodsListDiv.appendChild(itemDiv);
+  });
+}
+
+// Call the renderGoodsList function when the page loads
+window.onload = renderGoodsList;
