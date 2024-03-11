@@ -9,7 +9,22 @@
     <title>Товары</title>
   </head>
   <body>
-    <div id="goods-list">test</div>
+    <h1>Products</h1>
+    <h1>Product Filtering</h1>
+
+    <form id="filterForm">
+      <label for="field">Select Field:</label>
+      <select id="field">
+        <option value="price">Price</option>
+        <option value="brand">Brand</option>
+        <option value="product">Product</option>
+      </select>
+      <label for="value">Enter Value:</label>
+      <input type="text" id="value" required />
+      <button type="submit">Filter</button>
+    </form>
+
+    <div id="results"><div id="dataContainer" class="data-grid"></div></div>
 
     <script
       src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"
@@ -19,5 +34,6 @@
     ></script>
 
     <script type="module" src="app.js"></script>
+    <script type="module" src="filter.js"></script>
   </body>
 </html>

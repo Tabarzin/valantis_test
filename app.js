@@ -1,62 +1,95 @@
 function generateXAuthHeader(password) {
   const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   const xAuthValue = `${password}_${timestamp}`;
-
   const md5Hash = CryptoJS.MD5(xAuthValue).toString();
-
   return md5Hash;
 }
 
 const apiUrl = "http://api.valantis.store:40000/";
 const password = "Valantis";
 const xAuthHeaderValue = generateXAuthHeader(password);
-console.log(xAuthHeaderValue);
 
-// const requestData = {
-//   action: "filter",
-//   params: { price: 17500.0 },
-// };
+export const fetchData = async (requestData) => {
+  try {
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Auth": xAuthHeaderValue,
+      },
+      body: JSON.stringify(requestData),
+    });
 
-const requestData = {
-  action: "get_items",
-  params: { ids: ["1789ecf3-f81c-4f49-ada2-83804dcc74b0"] },
-};
-
-fetch(apiUrl, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    "X-Auth": xAuthHeaderValue,
-  },
-  body: JSON.stringify(requestData),
-})
-  .then((response) => {
     if (!response.ok) {
       throw new Error("Network response was not ok");
     }
-    return response.json();
-  })
-  .then((data) => {
-    console.log("Response:", data);
-  })
-  .catch((error) => {
+
+    return await response.json();
+  } catch (error) {
     console.error("Error:", error);
-  });
+    if (
+      error instanceof Error &&
+      error.message.includes("Network response was not ok")
+    ) {
+      console.log("Retrying request...");
+      return fetchData(requestData);
+    } else {
+      console.error("Unable to retry request. Error:", error);
+    }
+  }
+};
 
-// Function to render goods list in HTML
-async function renderGoodsList() {
-  const goodsListDiv = document.getElementById("goods-list");
-  const goodsData = await fetchGoods();
+const fetchIds = async () => {
+  const requestData = {
+    action: "get_ids",
+    params: {},
+  };
 
-  goodsListDiv.innerHTML = ""; // Clear previous content
+  return await fetchData(requestData);
+};
 
-  goodsData.forEach((item) => {
-    const itemDiv = document.createElement("div");
-    itemDiv.classList.add("item");
-    itemDiv.textContent = `ID: ${item.id}, Name: ${item.name}, Price: ${item.price}`;
-    goodsListDiv.appendChild(itemDiv);
-  });
-}
+const fetchItems = async (ids) => {
+  const requestData = {
+    action: "get_items",
+    params: { ids },
+  };
 
-// Call the renderGoodsList function when the page loads
-window.onload = renderGoodsList;
+  return await fetchData(requestData);
+};
+
+export const displayData = (data) => {
+  const dataContainer = document.getElementById("dataContainer");
+  const results = data.result;
+
+  if (results.length === 0) {
+    dataContainer.innerHTML = "<p>Нет данных</p>";
+    return;
+  }
+
+  const html = results
+    .map((item) => {
+      const brand = item.brand || "N/A";
+      const price = item.price || "N/A";
+      const id = item.id || "N/A";
+      const product = item.product || "N/A";
+
+      return `
+      <div class="data-item">
+        <p>Brand: ${brand}</p>
+        <p>Price: ${price}</p>
+        <p>ID: ${id}</p>
+        <p>Product: ${product}</p>
+      </div>
+    `;
+    })
+    .join("");
+
+  dataContainer.innerHTML = html;
+};
+
+window.onload = async function () {
+  const idsResponse = await fetchIds();
+  const productIds = idsResponse.result;
+  const itemsResponse = await fetchItems(productIds);
+  displayData(itemsResponse);
+};
