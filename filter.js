@@ -2,7 +2,6 @@ import { fetchData } from "./app.js";
 
 const filterProducts = async (field, value) => {
   try {
-    console.log(field);
     const requestData = {
       action: "filter",
       params: { [field]: value },
